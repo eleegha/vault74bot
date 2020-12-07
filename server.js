@@ -125,14 +125,28 @@ client.on("message", message => {
         while(count<5) {
           if(count == 0) {
             message.author.send('woo')
-            const await collector = channel.createMessageCollector(filter, {time: 60000});
-            collector.on('collect', mssg =>{
+            const collector = channel.createMessageCollector(filter, {max: 1, time: 60000});
+            collector.on('collect', msg =>{
               message.author.send(`${msg.content}`)
 
-            })
+            }).then( msg => {
+              message.author.send('woo2')
+              const collector = channel.createMessageCollector(filter, {max: 1, time: 60000});
+              collector.on('collect', msg =>{
+                message.author.send(`${msg.content}`)
+             })
+            }
+
+            )
+
+            
           }
           else if(count == 1) {
             message.author.send('woo2')
+            const collector = channel.createMessageCollector(filter, {max: 1, time: 60000});
+            collector.on('collect', msg =>{
+              message.author.send(`${msg.content}`)
+          })
           }
           else {
             message.author.send("uh oh")
