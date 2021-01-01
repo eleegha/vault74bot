@@ -6,7 +6,6 @@ const { prefix, token } = require('./config.json');
 count = 1
 
 
-/*
 const sequelize = new Sequelize('database', 'user', 'password', {
 	host: 'localhost',
 	dialect: 'sqlite',
@@ -14,110 +13,119 @@ const sequelize = new Sequelize('database', 'user', 'password', {
 	// SQLite only
 	storage: 'database.sqlite',
 });
-*/
+
+
+const Tags = sequelize.define('tags', {
+	osversion: Sequelize.STRING,
+	username: Sequelize.STRING,
+	
+});
+
 
 var latest = "didnt work"
-client.on("message", message => {
+
+
+client.once('ready', () => {
+	Tags.sync();
+
+});
+
+client.on("message", async message => {
   
+
+  
+
+
+
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).trim().split(/ /);
   const command = args.shift().toLowerCase();
-
+  const commandArgs = args.join(' ');
 
   switch (command) {
-    case 'ifTest':
-      var time = new Date().getHours();
-      if (time < 20) {
-        greeting = "Good day";
-      } else {
-        greeting = "Good evening";
-      } 
-      break;
-    case 'creator':
-      let creatorEmbed = new Discord.MessageEmbed()
+    case 'setos':
+      const splitArgs = commandArgs.split(' ');
+      const osName = splitArgs.shift();
+      console.log(osName)
+
+      try {
+            console.log("test")
+    	const flag = await Tags.create({
         
+    		osversion: osName,
+    		username: message.author.username,
+    	});
+    	message.reply(`Tag ${flag.osversion} added.`);
+      }
+      catch(e) {
+        if(e.name === "UnhandledPromiseRejectionWarning") {
+          message.reply("That tag already exists!")
+        }
+        console.log(e)
+        return message.reply("An error has occured")
+        
+      }
+      break; 
+      
+        
+      break;
     case 'twitter':
       message.channel.send(`https://twitter.com/Vault74_dapp
       `)
       break;
-    case 'rejected':
-      message.channel.send(`https://media.discordapp.net/attachments/783093399804313620/784470247477477407/unknown.png?width=608&height=144`)
-      break;
-
-    case 'prune':
-      if(message.author.id == '<@656889527561879572>'){
-        message.channel.send('no')
-      }
-
-
-    case 'test':
-      if (message.member.hasPermission('KICK_MEMBERS')) {
-        console.log('This member can kick');
-      } else if (message.member.hasPermission(['KICK_MEMBERS', 'BAN_MEMBERS'])) {
-        console.log('This member can kick and ban');
-      } else {
-        console.log("This member cannot.")
-      }
-      break;
-
-    case 'ping':
-      if (message.member.hasPermission([`MANAGE_MESSAGES`])) {
-        return message.reply("You can use this command!")
-      } else {
-        return message.reply("Sorry, an error occurred.")
-      }
-      break;
-
-    case 'embed':
-      message.author.send("test")
-      let embed = new Discord.MessageEmbed()
-        .setTitle("Title")
-        .setDescription("Description")
-        .setColor("RANDOM")
-        .setFooter("Footer")
-      message.channel.send(embed)
-      break;
-    
-    case 'avatar':
-      message.channel.send(message.author.displayAvatarURL(message.author))
-      break;
     
 
-    case 'latest':
-      var content = message.content.slice(prefix.length + 'latest'.length).trim().split('cvbaghsnbfv aaaaasdfgaksjdhfvbwbna')
-      console.log(content)  
-      //trims the !latest part off of the message
-      if (message.member.hasPermission(['ADMINISTRATOR']) && content.length == 1) {//checks if a user has administrator perms
-        console.log(content+`b`)
-        latest = content[1]
-        message.channel.send(`Link updated`)
-      }
-      else {
-        message.channel.send(content)
-      }
+    case 'link':
+      message.channel.send("https://vault74.io")
       
       break;
 
     case "idea": 
 
+      message.delete()
+      message.reply('we have sent you a DM with the idea report form.')
+      const filter3 = m => !m.author.bot;
+
+
       let embed3 = new Discord.MessageEmbed()
-        .setTitle(array[0])
-        .setDescription(array[1])
         .setColor("GREEN")
         .setFooter(`Submitted by: ${message.author.tag}`)
-      message.delete()
-      message.channel.send(embed3).then(sentEmbed => {
-        sentEmbed.react(`<:vaultTick:783373657891667999>`)
-        sentEmbed.react(`<:vaultCross:783373530552467456>`)
+        .setFooter(`Submitted by: ${message.author.tag}`,`${message.author.displayAvatarURL(message.author)}`)
+
+      message.author.createDM().then(async(channel) => {
+        message.author.send('What is the name for your idea?')
+        
+        const ideatitlecollector = await channel.createMessageCollector(filter3, {max: 1, time: 60000});
+        ideatitlecollector.on('collect', async msg => {
+          const ideatitle = msg.content
+
+            //Gets the user to state the info about the bug
+            message.author.send("Please describe the idea here:")
+            const ideadescriptioncollector = await channel.createMessageCollector(filter3, {max: 1, time: 60000});
+            ideadescriptioncollector.on('collect', async msg => {
+              const ideainfo = msg.content
+              embed3.setTitle(ideatitle)
+              embed3.setDescription(ideainfo)
+              const channel3 = client.channels.cache.find(channel => channel.name === 'ideas')   
+              channel3.send(embed3).then(sentEmbed => {
+               sentEmbed.react(`<:vaultTick:783373657891667999>`)
+              sentEmbed.react(`<:vaultCross:783373530552467456>`)
+              })
+            })
+        })
       })
+
+
+
+        
       break;
 
     case 'help':
       message.channel.send(`${message.author}, a list of commands...`)
       let embed4 = new Discord.MessageEmbed()
         .setTitle("Commands")
-        .setDescription("`!ping` - a test command\n `!embed` - a test embed command\n `!bug` - a WIP bug reporting command\n `!args-info` - a test arguments command\n `!help` - well... yeah\n `!dm` - a test Direct Message command\n`!prune` - very dangerous mass message delete command that shouldn't be used in any circumstances\n`!idea` - an idea reporting command\n`!github` - gives you a link to the Vault74 GitHub")
+        .setDescription("`!github` - gives you a link to the Vault74 github page \n `!twitter` - gives you a link to the Vault74 twitter \n `!idea` - a command which allows you to create a idea that is set to #ideas \n `!bug` - a bug reporting command that takes ote of all the info we need and sends it to #bugs \n `!link` - will send a link to the Vault74 website in the chat")
         .setColor("GREEN")
       message.channel.send(embed4)
       break;
@@ -134,7 +142,7 @@ client.on("message", message => {
       message.delete(
 
       )
-      message.reply('we have set you a DM with the report form.') 
+      message.reply('We have set you a DM with the bug report form.') 
       count = 0
       const filter = m => !m.author.bot;
       let embed2 = new Discord.MessageEmbed()
@@ -147,7 +155,7 @@ client.on("message", message => {
           const title = msg.content
 
             //Gets the user to state the info about the bug
-            message.author.send("Please describe the bug here:")
+            message.author.send("Please describe the bug here and paste the stuff from the bug catcher:")
             const collector2 = await channel.createMessageCollector(filter, {max: 1, time: 60000});
             collector2.on('collect', async msg => {
               const bugInfo = msg.content
@@ -160,7 +168,7 @@ client.on("message", message => {
                 const osv = msg.content
 
                 //Gets the user to state their Browser Version
-                message.author.send("Please state you browser version here:")
+                message.author.send("Please state your browser version here:")
                 const collector4 = await 
                channel.createMessageCollector(filter, {max: 1, time: 60000});
                collector4.on('collect', async msg => {
@@ -186,7 +194,7 @@ client.on("message", message => {
                    )
                    embed2.setTimestamp(),
                    embed2.setColor('GREEN')
-                   embed2.setThumbnail('https://cdn.discordapp.com/icons/773445116572073995/5a124198a617d8312bb9a205fd46304d.png?size=128')
+                   embed2.setThumbnail('https://cdn.discordapp.com/icons/773445116572073995/85db0432e537e62029cdf1763f199776.png?size=128')
                    message.author.send('Are you sure you want to report this bug? `YES` or `NO`')
                    message.author.send(embed2)
 
@@ -195,7 +203,8 @@ client.on("message", message => {
                    const confirm = await channel.createMessageCollector(filter, {max: 1, time: 30000, errors: ['time'] })
                    confirm.on('collect', async msg => {
                       if(yes.includes(msg.content.toLowerCase())) {
-                        message.channel.send(embed2)
+                        const channel4 = client.channels.cache.find(channel => channel.name === 'bugs')
+                        channel4.send(embed2)
                       }
                       else {
                         console.log(msg.content)
